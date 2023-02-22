@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var categories = [String]()
+    @State private var showingAlerts = false
     var body: some View {
         NavigationView {
             List(categories , id: \.self) { category in
@@ -21,6 +22,11 @@ struct ContentView: View {
         .task {
             await getCategories()
         }
+        .alert(isPresented: $showingAlerts) {
+            Alert(title: Text("Loading Error"),
+                  message: Text("There was a problem loading the API categories"),
+                  dismissButton: .default(Text("OK")))
+        }
     }
     func getCategories() async {
         let query = "https://api.publicapis.org/categories"
@@ -28,9 +34,11 @@ struct ContentView: View {
             if let (data, _) = try? await URLSession.shared.data(from: url) {
                 if let decodedResponse = try? JSONDecoder().decode(Categories.self, from: data) {
                     categories = decodedResponse.categories
+                    return
                 }
             }
         }
+        showingAlerts = true
     }
 }
 
